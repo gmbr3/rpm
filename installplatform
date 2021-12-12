@@ -48,7 +48,7 @@ for ARCH in noarch `grep ^arch_canon $RPMRC | cut -d: -f2`; do
 	CANONARCH=s390
 	CANONCOLOR=0
 	;;
-    s390x)
+    s390x*)
 	ISANAME=s390
 	ISABITS=64
 	CANONARCH=s390x
@@ -60,7 +60,7 @@ for ARCH in noarch `grep ^arch_canon $RPMRC | cut -d: -f2`; do
 	CANONARCH=ppc64
 	CANONCOLOR=3
 	;;
-    ppc64le)
+    ppc64le*)
 	ISANAME=ppc
         ISABITS=64
         CANONARCH=ppc64le
@@ -78,7 +78,7 @@ for ARCH in noarch `grep ^arch_canon $RPMRC | cut -d: -f2`; do
 	CANONARCH=i386
 	CANONCOLOR=0
 	;;
-    x86_64|amd64|ia32e)
+    x86_64*|amd64|ia32e)
 	ISANAME=x86
 	ISABITS=64
 	CANONARCH=x86_64
