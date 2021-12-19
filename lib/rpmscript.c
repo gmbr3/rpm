@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <lua.h>
 
 #include <rpm/rpmfileutil.h>
 #include <rpm/rpmmacro.h>
@@ -34,7 +35,7 @@ struct rpmScript_s {
     char *body;			/* script body */
     char *descr;		/* description for logging */
     rpmscriptFlags flags;	/* flags to control operation */
-    struct scriptNextFileFunc_s nextFileFunc;  /* input function */
+    struct scriptNextFileFunc_s *nextFileFunc;  /* input function */
 };
 
 struct scriptInfo_s {
@@ -93,6 +94,14 @@ static const struct scriptInfo_s * findTag(rpmTagVal tag)
 	si++;
     return si;
 }
+
+static int next_file(lua_State *L)
+{
+    scriptNextFileFunc nff = lua_touserdata(L, lua_upvalueindex(1));
+    lua_pushstring(L, nff->func(nff->param));
+    return 1;
+}
+
 /**
  * Run internal Lua script.
  */
@@ -103,12 +112,18 @@ static rpmRC runLuaScript(rpmPlugins plugins, ARGV_const_t prefixes,
 {
     char *scriptbuf = NULL;
     rpmRC rc = RPMRC_FAIL;
-    rpmlua lua = NULL; /* Global state. */
+    rpmlua lua = rpmluaGetGlobalState();
+    lua_State *L = rpmluaGetLua(lua);
     int cwd = -1;
 
     rpmlog(RPMLOG_DEBUG, "%s: running <lua> scriptlet.\n", sname);
 
-    rpmluaSetNextFileFunc(nextFileFunc->func, nextFileFunc->param);
+    if (nextFileFunc) {
+	lua_getglobal(L, "rpm");
+	lua_pushlightuserdata(L, nextFileFunc);
+	lua_pushcclosure(L, &next_file, 1);
+	lua_setfield(L, -2, "next_file");
+    }
 
     if (arg1 >= 0)
 	argvAddNum(argvp, arg1);
@@ -149,6 +164,12 @@ static rpmRC runLuaScript(rpmPlugins plugins, ARGV_const_t prefixes,
 	umask(oldmask);
     }
     free(scriptbuf);
+
+    if (nextFileFunc) {
+	lua_pushnil(L);
+	lua_setfield(L, -2, "next_file");
+	lua_pop(L, 1); /* "rpm" global */
+    }
 
     return rc;
 }
@@ -332,7 +353,7 @@ static rpmRC runExtScript(rpmPlugins plugins, ARGV_const_t prefixes,
     close(inpipe[0]);
     inpipe[0] = 0;
 
-    if (nextFileFunc->func) {
+    if (nextFileFunc) {
 	while ((line = nextFileFunc->func(nextFileFunc->param)) != NULL) {
 	    size_t size = strlen(line);
 	    size_t ret_size;
@@ -424,9 +445,9 @@ rpmRC rpmScriptRun(rpmScript script, int arg1, int arg2, FD_t scriptFd,
 
     if (rc != RPMRC_FAIL) {
 	if (script_type & RPMSCRIPTLET_EXEC) {
-	    rc = runExtScript(plugins, prefixes, script->descr, lvl, scriptFd, &args, script->body, arg1, arg2, &script->nextFileFunc);
+	    rc = runExtScript(plugins, prefixes, script->descr, lvl, scriptFd, &args, script->body, arg1, arg2, script->nextFileFunc);
 	} else {
-	    rc = runLuaScript(plugins, prefixes, script->descr, lvl, scriptFd, &args, script->body, arg1, arg2, &script->nextFileFunc);
+	    rc = runLuaScript(plugins, prefixes, script->descr, lvl, scriptFd, &args, script->body, arg1, arg2, script->nextFileFunc);
 	}
     }
 
@@ -487,9 +508,6 @@ static rpmScript rpmScriptNew(Header h, rpmTagVal tag, const char *body,
 	script->body = b;
     }
 
-    script->nextFileFunc.func = NULL;
-    script->nextFileFunc.param = NULL;
-
     free(nevra);
     return script;
 }
@@ -497,8 +515,9 @@ static rpmScript rpmScriptNew(Header h, rpmTagVal tag, const char *body,
 void rpmScriptSetNextFileFunc(rpmScript script, char *(*func)(void *),
 			    void *param)
 {
-    script->nextFileFunc.func = func;
-    script->nextFileFunc.param = param;
+    script->nextFileFunc = xmalloc(sizeof(*script->nextFileFunc));
+    script->nextFileFunc->func = func;
+    script->nextFileFunc->param = param;
 }
 
 rpmTagVal triggerDsTag(rpmscriptTriggerModes tm)
@@ -634,6 +653,7 @@ rpmScript rpmScriptFree(rpmScript script)
 	free(script->args);
 	free(script->body);
 	free(script->descr);
+	free(script->nextFileFunc);
 	free(script);
     }
     return NULL;

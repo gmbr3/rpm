@@ -150,22 +150,13 @@ or shortly
 
 %"{?macro_name}" is a shortcut for "%{?macro_name:%macro_name}".
 
-For "macro_name" that is builtin macro conditionally expanded macros
-behave differently. In such a case both macro "%{?builtin_macro:value}" and
-its negative version "%{?!builtin_macro:value}" are expanded exactly like
-the macro without exclamation mark and question mark "%{builtin_macro:value}".
-There is a special case among builtin macros:
+For more complex tests, use [expressions](#expression-expansion) or [Lua](lua).
+Note that `%if`, `%ifarch` and the like are not macros, they are spec
+directives and only usable in that context.
 
-```
-%{?load:file}
-```
-
-it works like "%{load:file}" with the difference that the expansion does not
-emit an error if the file fails to load.
-
-For more complex tests it is possible to use conditionals like %if, %ifarch or
-%ifos. But the conditionals are not macros thus they are not described here.
-For more information please refer to spec manual.
+Note that in rpm >= 4.17, conditionals on built-in macros simply test for
+existence of that built-in, just like with any other macros.
+In older versions, the behavior of conditionals on built-ins is undefined.
 
 ## Example of a Macro
 

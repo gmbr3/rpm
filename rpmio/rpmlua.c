@@ -61,9 +61,6 @@ struct rpmluapb_s {
 
 static rpmlua globalLuaState = NULL;
 
-static char *(*nextFileFunc)(void *) = NULL;
-static void *nextFileFuncParam = NULL;
-
 static int luaopen_rpm(lua_State *L);
 static int rpm_print(lua_State *L);
 static int rpm_exit(lua_State *L);
@@ -219,12 +216,6 @@ char *rpmluaPopPrintBuffer(rpmlua lua)
     return ret;
 }
 
-void rpmluaSetNextFileFunc(char *(*func)(void *), void *funcParam)
-{
-    nextFileFunc = func;
-    nextFileFuncParam = funcParam;
-}
-
 int rpmluaCheckScript(rpmlua lua, const char *script, const char *name)
 {
     INITSTATE(lua);
@@ -260,6 +251,7 @@ int rpmluaRunScript(rpmlua lua, const char *script, const char *name,
     int ret = -1;
     int oind = 0;
     static const char *lualocal = "local opt, arg = ...;";
+    int otop = lua_gettop(L); /* this can recurse through macros */
 
     if (name == NULL)
 	name = "<lua>";
@@ -298,12 +290,25 @@ int rpmluaRunScript(rpmlua lua, const char *script, const char *name,
 	}
     }
 
-    if (lua_pcall(L, 2, 0, 0) != 0) {
+    if (lua_pcall(L, 2, LUA_MULTRET, 0) != 0) {
 	rpmlog(RPMLOG_ERR, _("lua script failed: %s\n"),
 		 lua_tostring(L, -1));
 	lua_pop(L, 1);
 	goto exit;
     }
+
+    int nret = lua_gettop(L) - otop;
+    if (nret > 0 && lua->printbuf) {
+	lua_getglobal(L, "print");
+	lua_insert(L, -(nret + 1));
+	if (lua_pcall(L, nret, 0, 0) != 0) {
+	    rpmlog(RPMLOG_ERR, _("result print failed: %s\n"),
+		    lua_tostring(L, -1));
+	    lua_pop(L, 1);
+	    goto exit;
+	}
+    }
+
     ret = 0;
 
 exit:
@@ -568,16 +573,6 @@ static int rpm_interactive(lua_State *L)
 
     _rpmluaInteractive(L);
     return 0;
-}
-
-static int rpm_next_file(lua_State *L)
-{
-    if (nextFileFunc)
-	lua_pushstring(L, nextFileFunc(nextFileFuncParam));
-    else
-	lua_pushstring(L, NULL);
-
-    return 1;
 }
 
 typedef struct rpmluaHookData_s {
@@ -1234,7 +1229,6 @@ static const luaL_Reg rpmlib[] = {
     {"unregister", rpm_unregister},
     {"call", rpm_call},
     {"interactive", rpm_interactive},
-    {"next_file", rpm_next_file},
     {"execute", rpm_execute},
     {"redirect2null", rpm_redirect2null},
     {"vercmp", rpm_vercmp},
