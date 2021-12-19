@@ -1205,6 +1205,20 @@ static void defaultMachine(rpmrcCtx ctx, const char ** arch, const char ** os)
                 strcpy(un.machine, "ppc64p7");
 	    }
         }
+#	else
+	{
+            int powerlvl;
+            if (!rstreq(un.machine, "ppc") &&
+		    sscanf(rpmat.platform, "power%d", &powerlvl) == 1 &&
+		    powerlvl > 9) {
+                strcpy(un.machine, "ppc64lep10");
+	    }
+            else if (!rstreq(un.machine, "ppc") &&
+		    sscanf(rpmat.platform, "power%d", &powerlvl) == 1 &&
+		    powerlvl > 8) {
+		strcpy(un.machine, "ppc64lep9");
+	    }
+        }
 #	endif	/* __ORDER_BIG_ENDIAN__ */
 #	endif	/* ppc64*-linux */
 
