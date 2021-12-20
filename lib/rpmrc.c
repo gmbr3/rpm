@@ -1224,28 +1224,28 @@ static void defaultMachine(rpmrcCtx ctx, const char ** arch, const char ** os)
 
 #       if defined(__linux__) && defined(__s390x__)
 	{
-		int zsystemslvl;
-		if (rstreq(rpmat.platform, "z900")) ||
-   			(rstreq(rpmat.platform, "z990")) ||
-   			(rstreq(rpmat.platform, "z9-109")) ||
-   			(rstreq(rpmat.platform, "z10")) ||
-   			(rstreq(rpmat.platform, "z196")) ||
-   			(rstreq(rpmat.platform, "zEC12")) ||
-   			(!(rpmat.hwcap & HWCAP_S390_VX)) {
-   			strcpy(un.machine, "s390x");
-		}
-		else if (sscanf(rpmat.platform, "z%d", &zsystemslvl) == 1 &&
+            int zsystemslvl;
+            if (rstreq(rpmat.platform, "z900")) ||
+		    (rstreq(rpmat.platform, "z990")) ||
+		    (rstreq(rpmat.platform, "z9-109")) ||
+		    (rstreq(rpmat.platform, "z10")) ||
+		    (rstreq(rpmat.platform, "z196")) ||
+		    (rstreq(rpmat.platform, "zEC12")) ||
+		    (!(rpmat.hwcap & HWCAP_S390_VX)) {
+                strcpy(un.machine, "s390x");
+            }
+            else if (sscanf(rpmat.platform, "z%d", &zsystemslvl) == 1 &&
 		    zsystemslvl > 14) {
-   			strcpy(un.machine, "s390xz15");
-		}
-		else if (sscanf(rpmat.platform, "z%d", &zsystemslvl) == 1 &&
+                strcpy(un.machine, "s390xz15");
+            }
+            else if (sscanf(rpmat.platform, "z%d", &zsystemslvl) == 1 &&
 		    zsystemslvl > 13) {
-   			strcpy(un.machine, "s390xz14");
-		}
-		else if (sscanf(rpmat.platform, "z%d", &zsystemslvl) == 1 &&
+                strcpy(un.machine, "s390xz14");
+            }
+            else if (sscanf(rpmat.platform, "z%d", &zsystemslvl) == 1 &&
 		    zsystemslvl > 12) {
-   			strcpy(un.machine, "s390xz13");
-		}
+                strcpy(un.machine, "s390xz13");
+            }
 	}
 #	endif /* s390x*-linux */
 
