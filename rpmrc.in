@@ -100,9 +100,9 @@ optflags: hades -O2 -g -fomit-frame-pointer
 
 optflags: s390 -O2 -g
 optflags: s390x -O2 -g
-optflags: s390x-z13 -O2 -g -march=z13
-optflags: s390x-z14 -O2 -g -march=z14
-optflags: s390x-z15 -O2 -g -march=z15
+optflags: s390xz13 -O2 -g -march=z13
+optflags: s390xz14 -O2 -g -march=z14
+optflags: s390xz15 -O2 -g -march=z15
 
 optflags: sh3 -O2 -g
 optflags: sh4 -O2 -g -mieee
@@ -246,9 +246,9 @@ arch_canon:	hades: m68kmint		13
 arch_canon:	s390: s390	14
 arch_canon:	i370: i370	14
 arch_canon:	s390x: s390x	15
-arch_canon:	s390x-z13: s390x-z13	15
-arch_canon:	s390x-z14: s390x-z14	15
-arch_canon:	s390x-z15: s390x-z15	15
+arch_canon:	s390xz13: s390xz13	15
+arch_canon:	s390xz14: s390xz14	15
+arch_canon:	s390xz15: s390xz15	15
 
 arch_canon:	ppc64:	ppc64	16
 arch_canon:	ppc64le:	ppc64le	16
@@ -390,9 +390,9 @@ buildarchtranslate: hades: m68kmint
 
 buildarchtranslate: s390: s390
 buildarchtranslate: s390x: s390x
-buildarchtranslate: s390x-z13: s390x
-buildarchtranslate: s390x-z14: s390x
-buildarchtranslate: s390x-z15: s390x
+buildarchtranslate: s390xz13: s390x
+buildarchtranslate: s390xz14: s390x
+buildarchtranslate: s390xz15: s390x
 
 buildarchtranslate: ia64: ia64
 
@@ -509,9 +509,9 @@ arch_compat: hades: m68kmint noarch
 arch_compat: i370: noarch
 arch_compat: s390: noarch
 arch_compat: s390x: s390 noarch
-arch_compat: s390x-z13: s390x
-arch_compat: s390x-z14: s390x-z13
-arch_compat: s390x-z15: s390x-z14
+arch_compat: s390xz13: s390x
+arch_compat: s390xz14: s390xz13
+arch_compat: s390xz15: s390xz14
 
 arch_compat: ia64: noarch
 
@@ -655,9 +655,9 @@ buildarch_compat: hades: m68kmint noarch
 
 buildarch_compat: s390: noarch
 buildarch_compat: s390x: noarch
-buildarch_compat: s390x-z13: s390x
-buildarch_compat: s390x-z14: s390x
-buildarch_compat: s390x-z15: s390x
+buildarch_compat: s390xz13: s390x
+buildarch_compat: s390xz14: s390x
+buildarch_compat: s390xz15: s390x
 
 buildarch_compat: ia64: noarch
 
